@@ -1,10 +1,9 @@
 package org.telegram.auth.telegramauth.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "telegram_users")
@@ -16,20 +15,52 @@ import lombok.*;
 public class TelegramUser {
 
     @Id
-    private Long id;
+    private Long telegramId;
 
-    @Column(nullable = false)
+    @Column
     private String firstName;
 
+    @Column
     private String lastName;
 
+    @Column
     private String username;
 
-    private String photoUrl;
+    @Column
+    private String languageCode;
 
-    @Column(nullable = false)
-    private Long authDate;
+    @Column
+    private Boolean isPremium;
 
-    @Column(nullable = false)
-    private Long lastVisit;
+    @Column
+    private Boolean allowsWriteToPm;
+
+    @Column
+    private LocalDateTime createdAt;
+
+    @Column
+    private LocalDateTime updatedAt;
+
+    public TelegramUser(Long telegramId) {
+        this.telegramId = telegramId;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    private void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public String getDisplayName() {
+        if (firstName != null && lastName != null) {
+            return firstName + " " + lastName;
+        } else if (firstName != null) {
+            return firstName;
+        } else if (username != null) {
+            return "@" + username;
+        } else {
+            return "User " + telegramId;
+        }
+    }
 }

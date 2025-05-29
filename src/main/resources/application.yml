@@ -11,3 +11,19 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:changelog/db.changelog-master.yaml
+  springdoc:
+    api-docs:
+      path: /api-docs
+      enabled: true
+    swagger-ui:
+      path: /swagger-ui
+      operations-sorter: method
+      enabled: true
+      config-url: /api-docs/swagger-config
+
+telegram:
+  bot:
+    token: 8120838392:AAHkDJsHU7qDU5vHE55NP1C4cvRQXWEhNv4
+
+jwt:
+  secret: CyqdyuZNxE2KQPP3Nx6ufk9FPHhiGRugXHC/UA24kyqF/phbN7ov7oVeQkljYnHyhuvIBVz1Wddjkk/3A6dz7g==

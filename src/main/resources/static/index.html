@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram WebApp - Профиль пользователя</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+        }
+        .card {
+            background: var(--tg-theme-secondary-bg-color, #f1f5f9);
+            border-color: var(--tg-theme-hint-color, #e2e8f0);
+        }
+        .accent {
+            color: var(--tg-theme-link-color, #3b82f6);
+        }
+        .premium-badge {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+<div class="max-w-md mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold mb-2">👋 Добро пожаловать!</h1>
+        <p class="text-gray-600">Ваш профиль в Telegram WebApp</p>
+    </div>
+
+    <!-- User Profile Card -->
+    <div class="card rounded-xl p-6 shadow-lg border mb-6">
+        <!-- Avatar and Name -->
+        <div class="text-center mb-6">
+            <div class="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                <span th:text="${user.firstName != null ? user.firstName.substring(0,1).toUpperCase() : 'U'}">U</span>
+            </div>
+            <h2 class="text-2xl font-bold mb-1" th:text="${user.displayName}">Имя пользователя</h2>
+            <p class="text-gray-500" th:if="${user.username}" th:text="'@' + ${user.username}">@username</p>
+        </div>
+
+        <!-- User Info -->
+        <div class="space-y-4">
+            <!-- Telegram ID -->
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-700">Telegram ID:</span>
+                <span class="font-mono text-sm accent" th:text="${user.telegramId}">123456789</span>
+            </div>
+
+            <!-- First Name -->
+            <div th:if="${user.firstName}" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-700">Имя:</span>
+                <span th:text="${user.firstName}">Имя</span>
+            </div>
+
+            <!-- Last Name -->
+            <div th:if="${user.lastName}" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-700">Фамилия:</span>
+                <span th:text="${user.lastName}">Фамилия</span>
+            </div>
+
+            <!-- Username -->
+            <div th:if="${user.username}" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-700">Имя пользователя:</span>
+                <span class="accent" th:text="'@' + ${user.username}">@username</span>
+            </div>
+
+            <!-- Language -->
+            <div th:if="${user.languageCode}" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-700">Язык:</span>
+                <span class="uppercase font-mono text-sm" th:text="${user.languageCode}">ru</span>
+            </div>
+        </div>
+
+        <!-- Premium Badge -->
+        <div th:if="${user.isPremium}" class="mt-6 text-center">
+                <span class="premium-badge text-white px-4 py-2 rounded-full text-sm font-bold inline-flex items-center">
+                    ⭐ Telegram Premium
+                </span>
+        </div>
+
+        <!-- Account Stats -->
+        <div class="mt-6 grid grid-cols-2 gap-4">
+            <div class="text-center p-3 bg-blue-50 rounded-lg">
+                <div class="text-2xl font-bold accent" th:text="${user.createdAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd'))}">01</div>
+                <div class="text-xs text-gray-600" th:text="${user.createdAt.format(T(java.time.format.DateTimeFormatter).ofPattern('MMM yyyy'))}">Янв 2024</div>
+                <div class="text-xs text-gray-500">Регистрация</div>
+            </div>
+            <div class="text-center p-3 bg-green-50 rounded-lg">
+                <div class="text-2xl font-bold text-green-600">✓</div>
+                <div class="text-xs text-gray-600">Активен</div>
+                <div class="text-xs text-gray-500">Статус</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Info -->
+    <div class="card rounded-xl p-4 shadow-lg border">
+        <h3 class="font-bold mb-3 flex items-center">
+            <span class="mr-2">📊</span>
+            Информация об аккаунте
+        </h3>
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+                <span class="text-gray-600">Дата создания:</span>
+                <span th:text="${user.createdAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd.MM.yyyy HH:mm'))}">01.01.2024 12:00</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-600">Последнее обновление:</span>
+                <span th:text="${user.updatedAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd.MM.yyyy HH:mm'))}">01.01.2024 12:00</span>
+            </div>
+            <div th:if="${user.allowsWriteToPm != null}" class="flex justify-between">
+                <span class="text-gray-600">Разрешены личные сообщения:</span>
+                <span th:text="${user.allowsWriteToPm ? '✅ Да' : '❌ Нет'}">✅ Да</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-8 text-gray-500 text-sm">
+        <p>Powered by Telegram WebApp</p>
+        <p class="mt-1">🚀 Безопасная аутентификация</p>
+    </div>
+</div>
+
+<script>
+    // Инициализация Telegram WebApp
+    if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+
+        // Расширяем WebApp на весь экран
+        tg.expand();
+
+        // Устанавливаем цвета темы
+        document.documentElement.style.setProperty('--tg-color-scheme', tg.colorScheme);
+
+        // Показываем главную кнопку
+        tg.MainButton.setText('Обновить данные');
+        tg.MainButton.show();
+
+        // Обработчик главной кнопки
+        tg.MainButton.onClick(() => {
+            window.location.reload();
+        });
+
+        // Уведомляем Telegram что WebApp готов
+        tg.ready();
+    }
+
+    // Отправляем initData в заголовке при каждом запросе
+    if (window.Telegram && window.Telegram.WebApp) {
+        const initData = window.Telegram.WebApp.initData;
+
+        // Переопределяем fetch для автоматической отправки initData
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            options.headers = {
+                ...options.headers,
+                'X-Init-Data': initData
+            };
+            return originalFetch(url, options);
+        };
+    }
+</script>
+</body>
+</html>
