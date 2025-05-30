@@ -1,7 +1,5 @@
 package org.telegram.auth.telegramauth.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,40 +49,35 @@ public class TelegramAuthService {
             // Создаем копию параметров и удаляем hash и signature
             Map<String, String> dataParams = new HashMap<>(params);
             dataParams.remove("hash");
-            //  dataParams.remove("signature");
+            dataParams.remove("signature");
 
-            // ВАЖНО: декодируем URL-encoded значения
+            // Декодируем URL-encoded значения БЕЗ дополнительной обработки JSON
             Map<String, String> decodedParams = new HashMap<>();
             for (Map.Entry<String, String> entry : dataParams.entrySet()) {
                 try {
                     String decodedValue = URLDecoder.decode(entry.getValue(), StandardCharsets.UTF_8);
-
-                    // Специальная обработка для параметра user
-                    if ("user".equals(entry.getKey())) {
-                        // Парсим JSON и пересоздаем его без экранированных слешей
-                        try {
-                            ObjectMapper mapper = new ObjectMapper();
-                            JsonNode jsonNode = mapper.readTree(decodedValue);
-                            decodedValue = mapper.writeValueAsString(jsonNode);
-                        } catch (Exception jsonException) {
-                            log.warn("Failed to parse user JSON, using original: {}", jsonException.getMessage());
-                            // Fallback: просто убираем экранированные слеши
-                            decodedValue = decodedValue.replace("\\/", "/");
-                        }
-                    }
-
                     decodedParams.put(entry.getKey(), decodedValue);
+                    log.debug("Decoded {}: {} -> {}", entry.getKey(), entry.getValue(), decodedValue);
                 } catch (Exception e) {
                     log.warn("Failed to decode parameter {}: {}", entry.getKey(), e.getMessage());
                     decodedParams.put(entry.getKey(), entry.getValue());
                 }
             }
 
+            // Создаем data check string в том же порядке, что и получили
             String dataCheckString = decodedParams.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .map(entry -> entry.getKey() + "=" + entry.getValue())
                     .collect(Collectors.joining("\n"));
-            log.info("Data check string: {}", dataCheckString);
+
+            log.info("Data check string length: {}", dataCheckString.length());
+            log.info("Data check string: '{}'", dataCheckString);
+
+            // Выводим каждую строку отдельно для отладки
+            String[] lines = dataCheckString.split("\n");
+            for (int i = 0; i < lines.length; i++) {
+                log.info("Line {}: '{}'", i, lines[i]);
+            }
 
             byte[] secretKey = createSecretKey(botToken);
             log.info("Secret key (hex): {}", bytesToHex(secretKey));
@@ -93,6 +86,16 @@ public class TelegramAuthService {
 
             if (!receivedHash.equals(calculatedHash)) {
                 log.warn("Hash mismatch. Calculated: {}, Received: {}", calculatedHash, receivedHash);
+
+                // Дополнительная отладка - попробуем без URL декодирования
+                String rawDataCheckString = dataParams.entrySet().stream()
+                        .sorted(Map.Entry.comparingByKey())
+                        .map(entry -> entry.getKey() + "=" + entry.getValue())
+                        .collect(Collectors.joining("\n"));
+                String rawCalculatedHash = calculateHash(rawDataCheckString, secretKey);
+                log.info("Raw (no decode) data check string: '{}'", rawDataCheckString);
+                log.info("Raw calculated hash: {}", rawCalculatedHash);
+
                 return false;
             }
 
