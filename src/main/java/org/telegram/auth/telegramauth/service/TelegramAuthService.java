@@ -23,7 +23,6 @@ public class TelegramAuthService {
     private String botToken;
 
     public boolean validateTelegramData(String initData) {
-        log.info("Using bot token: {}", botToken);
         try {
             Map<String, String> params = parseInitData(initData);
             log.info("Parsed initData params: {}", params);
@@ -57,6 +56,10 @@ public class TelegramAuthService {
             for (Map.Entry<String, String> entry : dataParams.entrySet()) {
                 try {
                     String decodedValue = URLDecoder.decode(entry.getValue(), StandardCharsets.UTF_8);
+                    // Дополнительная обработка для JSON строк - убираем экранирование слешей
+                    if ("user".equals(entry.getKey()) && decodedValue.contains("\\/")) {
+                        decodedValue = decodedValue.replace("\\/", "/");
+                    }
                     decodedParams.put(entry.getKey(), decodedValue);
                 } catch (Exception e) {
                     log.warn("Failed to decode parameter {}: {}", entry.getKey(), e.getMessage());
