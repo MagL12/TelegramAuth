@@ -21,8 +21,7 @@ spring:
       operations-sorter: method
       enabled: true
       config-url: /api-docs/swagger-config
-  security:
-    enabled: false
+
 
 telegram:
   bot:
