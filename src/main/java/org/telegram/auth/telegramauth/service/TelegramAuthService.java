@@ -87,8 +87,6 @@ public class TelegramAuthService {
                     if ("user".equals(key)) {
                         try {
                             value = URLDecoder.decode(value, StandardCharsets.UTF_8);
-                            // Удаляем экранирование слешей
-                            value = value.replace("\\/", "/");
                         } catch (Exception e) {
                             log.warn("Failed to decode user parameter: {}", e.getMessage());
                         }
@@ -115,13 +113,10 @@ public class TelegramAuthService {
     }
 
     private byte[] createSecretKey(String botToken) throws Exception {
-        log.info("Using bot token: {}", botToken);
         Mac hmacSha256 = Mac.getInstance("HmacSHA256");
-        SecretKeySpec keySpec = new SecretKeySpec("WebAppData".getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        SecretKeySpec keySpec = new SecretKeySpec(botToken.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         hmacSha256.init(keySpec);
-        byte[] secretKey = hmacSha256.doFinal(botToken.getBytes(StandardCharsets.UTF_8));
-        log.info("Secret key: {}", bytesToHex(secretKey));
-        return secretKey;
+        return hmacSha256.doFinal("WebAppData".getBytes(StandardCharsets.UTF_8));
     }
 
     private String calculateHash(String data, byte[] secretKey) throws Exception {
