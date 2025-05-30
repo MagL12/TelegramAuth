@@ -8,10 +8,12 @@ import org.telegram.auth.telegramauth.dto.TelegramUserData;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -44,9 +46,24 @@ public class TelegramAuthService {
                 return false;
             }
 
-            params.remove("hash");
-            params.remove("signature"); // Исключаем signature
-            String dataCheckString = params.entrySet().stream()
+            // Создаем копию параметров и удаляем hash и signature
+            Map<String, String> dataParams = new HashMap<>(params);
+            dataParams.remove("hash");
+            dataParams.remove("signature");
+
+            // ВАЖНО: декодируем URL-encoded значения
+            Map<String, String> decodedParams = new HashMap<>();
+            for (Map.Entry<String, String> entry : dataParams.entrySet()) {
+                try {
+                    String decodedValue = URLDecoder.decode(entry.getValue(), StandardCharsets.UTF_8);
+                    decodedParams.put(entry.getKey(), decodedValue);
+                } catch (Exception e) {
+                    log.warn("Failed to decode parameter {}: {}", entry.getKey(), e.getMessage());
+                    decodedParams.put(entry.getKey(), entry.getValue());
+                }
+            }
+
+            String dataCheckString = decodedParams.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .map(entry -> entry.getKey() + "=" + entry.getValue())
                     .collect(Collectors.joining("\n"));
