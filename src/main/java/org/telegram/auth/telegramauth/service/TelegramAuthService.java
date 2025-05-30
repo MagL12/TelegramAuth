@@ -83,10 +83,15 @@ public class TelegramAuthService {
                     String key = entry.getKey();
                     String value = entry.getValue();
 
-                    // Для параметра user не нужно делать URL decode!
-                    // Telegram ожидает оригинальное URL-encoded значение
+                    // Для параметра user нужно декодировать URL-encoding
                     if ("user".equals(key)) {
-                        return key + "=" + value; // оставляем как есть
+                        try {
+                            value = URLDecoder.decode(value, StandardCharsets.UTF_8);
+                            // Удаляем экранирование слешей
+                            value = value.replace("\\/", "/");
+                        } catch (Exception e) {
+                            log.warn("Failed to decode user parameter: {}", e.getMessage());
+                        }
                     }
 
                     return key + "=" + value;
