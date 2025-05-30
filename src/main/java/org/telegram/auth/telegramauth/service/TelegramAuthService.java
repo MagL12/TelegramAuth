@@ -29,7 +29,6 @@ public class TelegramAuthService {
             Map<String, String> params = parseInitData(initData);
             log.info("Received initData: {}", initData);
 
-            // Проверяем срок действия (не более 1 часа)
             String authDate = params.get("auth_date");
             if (authDate == null) {
                 log.warn("auth_date is missing");
@@ -38,43 +37,35 @@ public class TelegramAuthService {
 
             long authTimestamp = Long.parseLong(authDate);
             long currentTimestamp = Instant.now().getEpochSecond();
-
-            // Проверяем, что данные не старше 1 часа (3600 секунд)
             if (currentTimestamp - authTimestamp > 3600) {
                 log.warn("auth_date is too old: {}", authTimestamp);
                 return false;
             }
 
-            // Проверяем hash
             String receivedHash = params.get("hash");
             if (receivedHash == null) {
                 log.warn("hash is missing");
                 return false;
             }
 
-            // Удаляем hash из параметров для валидации
             params.remove("hash");
-
-            // Создаем строку для проверки
             String dataCheckString = params.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .map(entry -> entry.getKey() + "=" + entry.getValue())
                     .collect(Collectors.joining("\n"));
 
-            // Вычисляем секретный ключ
             byte[] secretKey = createSecretKey(botToken);
-
-            // Вычисляем hash
             String calculatedHash = calculateHash(dataCheckString, secretKey);
+            log.info("Calculated hash: {}, Received hash: {}", calculatedHash, receivedHash);
 
             if (!receivedHash.equals(calculatedHash)) {
-                log.warn("Hash mismatch - received: {}, calculated: {}", receivedHash, calculatedHash);
+                log.warn("Hash mismatch");
                 return false;
             }
             log.info("initData validation successful");
             return true;
-
         } catch (Exception e) {
+            log.error("Validation failed: {}", e.getMessage(), e);
             return false;
         }
     }
