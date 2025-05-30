@@ -22,6 +22,8 @@ public class TelegramAuthService {
     @Value("${telegram.bot.token}")
     private String botToken;
 
+    private final Object macLock = new Object();
+
     public boolean validateTelegramData(String initData) {
         try {
             log.info("Raw initData: {}", initData);
@@ -131,13 +133,14 @@ public class TelegramAuthService {
     }
 
     private String calculateHash(String data, byte[] secretKey) throws Exception {
-        Mac hmacSha256 = Mac.getInstance("HmacSHA256");
-        SecretKeySpec keySpec = new SecretKeySpec(secretKey, "HmacSHA256");
-        hmacSha256.init(keySpec);
-        // Явная очистка перед вычислением
-        hmacSha256.reset();
-        byte[] hash = hmacSha256.doFinal(data.getBytes(StandardCharsets.UTF_8));
-        return bytesToHex(hash);
+        synchronized (macLock) {
+            Mac hmacSha256 = Mac.getInstance("HmacSHA256");
+            SecretKeySpec keySpec = new SecretKeySpec(secretKey, "HmacSHA256");
+            hmacSha256.init(keySpec);
+            hmacSha256.reset();
+            byte[] hash = hmacSha256.doFinal(data.getBytes(StandardCharsets.UTF_8));
+            return bytesToHex(hash);
+        }
     }
 
     private String bytesToHex(byte[] bytes) {
