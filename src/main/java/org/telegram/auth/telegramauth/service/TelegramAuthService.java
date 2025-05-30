@@ -45,7 +45,7 @@ public class TelegramAuthService {
             }
 
             params.remove("hash");
-            params.remove("signature"); // Удаляем signature, он не нужен для WebApp
+            params.remove("signature"); // Исключаем signature
             String dataCheckString = params.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .map(entry -> entry.getKey() + "=" + entry.getValue())
@@ -53,11 +53,12 @@ public class TelegramAuthService {
             log.info("Data check string: {}", dataCheckString);
 
             byte[] secretKey = createSecretKey(botToken);
+            log.info("Secret key (hex): {}", bytesToHex(secretKey));
             String calculatedHash = calculateHash(dataCheckString, secretKey);
             log.info("Calculated hash: {}, Received hash: {}", calculatedHash, receivedHash);
 
             if (!receivedHash.equals(calculatedHash)) {
-                log.warn("Hash mismatch");
+                log.warn("Hash mismatch. Calculated: {}, Received: {}", calculatedHash, receivedHash);
                 return false;
             }
 
@@ -84,7 +85,8 @@ public class TelegramAuthService {
         Mac hmacSha256 = Mac.getInstance("HmacSHA256");
         SecretKeySpec botTokenKeySpec = new SecretKeySpec(botToken.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         hmacSha256.init(botTokenKeySpec);
-        return hmacSha256.doFinal("WebAppData".getBytes(StandardCharsets.UTF_8));
+        byte[] secretKey = hmacSha256.doFinal("WebAppData".getBytes(StandardCharsets.UTF_8));
+        return secretKey;
     }
 
     private String calculateHash(String data, byte[] secretKey) throws Exception {
