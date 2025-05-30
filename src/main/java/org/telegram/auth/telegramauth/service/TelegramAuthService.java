@@ -55,7 +55,6 @@ public class TelegramAuthService {
             for (Map.Entry<String, String> entry : dataParams.entrySet()) {
                 try {
                     String decodedValue = URLDecoder.decode(entry.getValue(), StandardCharsets.UTF_8);
-                    // Убираем экранированные слеши для user
                     if ("user".equals(entry.getKey()) && decodedValue.contains("\\/")) {
                         decodedValue = decodedValue.replace("\\/", "/");
                         log.debug("Replaced escaped slashes in user: {} -> {}", entry.getValue(), decodedValue);
@@ -73,7 +72,9 @@ public class TelegramAuthService {
                     .map(entry -> entry.getKey() + "=" + entry.getValue())
                     .collect(Collectors.joining("\n"));
 
-            log.info("Data check string length: {}", dataCheckString.length());
+            // Дополнительная отладка для проверки строки
+            log.info("Data check string (byte length): {}", dataCheckString.getBytes(StandardCharsets.UTF_8).length);
+            log.info("Data check string (char array): {}", dataCheckString.toCharArray());
             log.info("Data check string: '{}'", dataCheckString);
 
             String[] lines = dataCheckString.split("\n");
