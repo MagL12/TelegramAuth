@@ -114,9 +114,9 @@ public class TelegramAuthService {
 
     private byte[] createSecretKey(String botToken) throws Exception {
         Mac hmacSha256 = Mac.getInstance("HmacSHA256");
-        SecretKeySpec keySpec = new SecretKeySpec("WebAppData".getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        SecretKeySpec keySpec = new SecretKeySpec(botToken.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         hmacSha256.init(keySpec);
-        return hmacSha256.doFinal(botToken.getBytes(StandardCharsets.UTF_8));
+        return hmacSha256.doFinal("WebAppData".getBytes(StandardCharsets.UTF_8));
     }
 
     private String calculateHash(String data, byte[] secretKey) throws Exception {
