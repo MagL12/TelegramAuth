@@ -1,7 +1,5 @@
 package org.telegram.auth.telegramauth.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,11 +9,8 @@ import org.telegram.auth.telegramauth.dto.TelegramUserData;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 @Service
 @Slf4j
@@ -50,6 +45,7 @@ public class TelegramAuthService {
             }
 
             params.remove("hash");
+            params.remove("signature"); // Удаляем signature, он не нужен для WebApp
             String dataCheckString = params.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .map(entry -> entry.getKey() + "=" + entry.getValue())
@@ -85,8 +81,10 @@ public class TelegramAuthService {
     }
 
     private byte[] createSecretKey(String botToken) throws Exception {
-        MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
-        return sha256.digest(botToken.getBytes(StandardCharsets.UTF_8));
+        Mac hmacSha256 = Mac.getInstance("HmacSHA256");
+        SecretKeySpec botTokenKeySpec = new SecretKeySpec(botToken.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        hmacSha256.init(botTokenKeySpec);
+        return hmacSha256.doFinal("WebAppData".getBytes(StandardCharsets.UTF_8));
     }
 
     private String calculateHash(String data, byte[] secretKey) throws Exception {
