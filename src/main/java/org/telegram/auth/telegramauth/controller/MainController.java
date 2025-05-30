@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.telegram.auth.telegramauth.dto.TelegramUserData;
@@ -29,7 +30,7 @@ public class MainController {
     private UserService userService;
 
     @GetMapping("/")
-    public String index(@RequestHeader(value = "X-Init-Data", required = false) String initData, Model model) {
+    public String index(@RequestParam(value = "tgWebAppData", required = false) String initData, Model model) {
         log.info("Received request with initData: {}", initData);
 
         if (initData == null || initData.isEmpty()) {

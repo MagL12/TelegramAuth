@@ -130,31 +130,17 @@
     // Инициализация Telegram WebApp
     if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
-
-        // Расширяем WebApp на весь экран
         tg.expand();
-
-        // Устанавливаем цвета темы
         document.documentElement.style.setProperty('--tg-color-scheme', tg.colorScheme);
-
-        // Показываем главную кнопку
         tg.MainButton.setText('Обновить данные');
         tg.MainButton.show();
-
-        // Обработчик главной кнопки
         tg.MainButton.onClick(() => {
             window.location.reload();
         });
-
-        // Уведомляем Telegram что WebApp готов
         tg.ready();
-    }
 
-    // Отправляем initData в заголовке при каждом запросе
-    if (window.Telegram && window.Telegram.WebApp) {
-        const initData = window.Telegram.WebApp.initData;
-
-        // Переопределяем fetch для автоматической отправки initData
+        // Для последующих запросов (если нужно)
+        const initData = tg.initData;
         const originalFetch = window.fetch;
         window.fetch = function(url, options = {}) {
             options.headers = {
@@ -163,6 +149,8 @@
             };
             return originalFetch(url, options);
         };
+    } else {
+        console.error("Telegram WebApp is not available");
     }
 </script>
 </body>

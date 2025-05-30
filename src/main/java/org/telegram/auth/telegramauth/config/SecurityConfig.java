@@ -16,7 +16,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .anyRequest().permitAll() // Разрешаем все запросы
                 )
-                .csrf().disable(); // Отключаем CSRF для простоты
+                .csrf(csrf -> csrf.disable()); // Отключаем CSRF через лямбда-выражение
         return http.build();
     }
 }
