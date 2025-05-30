@@ -9,16 +9,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.telegram.auth.telegramauth.dto.TelegramUserData;
 import org.telegram.auth.telegramauth.model.TelegramUser;
 import org.telegram.auth.telegramauth.service.TelegramAuthService;
 import org.telegram.auth.telegramauth.service.UserService;
 
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -30,8 +29,17 @@ public class MainController {
     private UserService userService;
 
     @GetMapping("/")
-    public String index(@RequestParam(value = "tgWebAppData", required = false) String initData, Model model) {
-        log.info("Received request with initData: {}", initData);
+    public String index(Model model) {
+        log.info("Received request to render index page");
+        // Пока не добавляем user в модель, это сделаем через AJAX
+        return "index";
+    }
+
+    @PostMapping("/validate")
+    @ResponseBody
+    public Map<String, Object> validate(@RequestBody Map<String, String> request) {
+        String initData = request.get("initData");
+        log.info("Received initData for validation: {}", initData);
 
         if (initData == null || initData.isEmpty()) {
             log.warn("Missing authentication data");
@@ -51,9 +59,19 @@ public class MainController {
 
         TelegramUser user = userService.saveOrUpdateUser(telegramUserData);
         log.info("User saved/updated: {}", user);
-        model.addAttribute("user", user);
 
-        return "index";
+        // Возвращаем данные пользователя для отображения на фронте
+        Map<String, Object> response = new HashMap<>();
+        response.put("telegramId", user.getTelegramId());
+        response.put("firstName", user.getFirstName());
+        response.put("lastName", user.getLastName());
+        response.put("username", user.getUsername());
+        response.put("languageCode", user.getLanguageCode());
+        response.put("isPremium", user.getIsPremium());
+        response.put("allowsWriteToPm", user.getAllowsWriteToPm());
+        response.put("createdAt", user.getCreatedAt().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+        response.put("updatedAt", user.getUpdatedAt().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+        return response;
     }
 
     @GetMapping("/health")

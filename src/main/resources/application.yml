@@ -8,6 +8,7 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: true
+    open-in-view: false
   liquibase:
     enabled: true
     change-log: classpath:changelog/db.changelog-master.yaml
@@ -20,13 +21,16 @@ spring:
       operations-sorter: method
       enabled: true
       config-url: /api-docs/swagger-config
-  spring:
-    security:
-      enabled: false
+  security:
+    enabled: false
 
 telegram:
   bot:
     token: 8120838392:AAHkDJsHU7qDU5vHE55NP1C4cvRQXWEhNv4
+logging:
+  level:
+    org.telegram.auth.telegramauth: DEBUG
+    org.springframework: INFO
 
-jwt:
-  secret: CyqdyuZNxE2KQPP3Nx6ufk9FPHhiGRugXHC/UA24kyqF/phbN7ov7oVeQkljYnHyhuvIBVz1Wddjkk/3A6dz7g==
+#jwt:
+#  secret: CyqdyuZNxE2KQPP3Nx6ufk9FPHhiGRugXHC/UA24kyqF/phbN7ov7oVeQkljYnHyhuvIBVz1Wddjkk/3A6dz7g==

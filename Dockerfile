@@ -20,5 +20,6 @@ FROM openjdk:17-jdk-slim
 WORKDIR /app
 COPY --from=build /app/target/telegramauth-0.0.1-SNAPSHOT.jar app.jar
 ENV PORT=8080
+ENV JAVA_OPTS="-Xms256m -Xmx512m"
 EXPOSE ${PORT}
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
+ENTRYPOINT ["/bin/sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
