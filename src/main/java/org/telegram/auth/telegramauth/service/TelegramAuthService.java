@@ -1,5 +1,7 @@
 package org.telegram.auth.telegramauth.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,10 +58,21 @@ public class TelegramAuthService {
             for (Map.Entry<String, String> entry : dataParams.entrySet()) {
                 try {
                     String decodedValue = URLDecoder.decode(entry.getValue(), StandardCharsets.UTF_8);
-                    // Дополнительная обработка для JSON строк - убираем экранирование слешей
-                    if ("user".equals(entry.getKey()) && decodedValue.contains("\\/")) {
-                        decodedValue = decodedValue.replace("\\/", "/");
+
+                    // Специальная обработка для параметра user
+                    if ("user".equals(entry.getKey())) {
+                        // Парсим JSON и пересоздаем его без экранированных слешей
+                        try {
+                            ObjectMapper mapper = new ObjectMapper();
+                            JsonNode jsonNode = mapper.readTree(decodedValue);
+                            decodedValue = mapper.writeValueAsString(jsonNode);
+                        } catch (Exception jsonException) {
+                            log.warn("Failed to parse user JSON, using original: {}", jsonException.getMessage());
+                            // Fallback: просто убираем экранированные слеши
+                            decodedValue = decodedValue.replace("\\/", "/");
+                        }
                     }
+
                     decodedParams.put(entry.getKey(), decodedValue);
                 } catch (Exception e) {
                     log.warn("Failed to decode parameter {}: {}", entry.getKey(), e.getMessage());
