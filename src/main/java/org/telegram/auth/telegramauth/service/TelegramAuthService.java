@@ -24,6 +24,7 @@ public class TelegramAuthService {
 
     public boolean validateTelegramData(String initData) {
         try {
+            log.info("Raw initData: {}", initData);
             Map<String, String> params = parseInitData(initData);
             log.info("Parsed initData params: {}", params);
 
@@ -46,16 +47,19 @@ public class TelegramAuthService {
                 return false;
             }
 
-            // Создаем копию параметров и удаляем hash и signature
             Map<String, String> dataParams = new HashMap<>(params);
             dataParams.remove("hash");
             dataParams.remove("signature");
 
-            // Декодируем URL-encoded значения БЕЗ дополнительной обработки JSON
             Map<String, String> decodedParams = new HashMap<>();
             for (Map.Entry<String, String> entry : dataParams.entrySet()) {
                 try {
                     String decodedValue = URLDecoder.decode(entry.getValue(), StandardCharsets.UTF_8);
+                    // Убираем экранированные слеши для user
+                    if ("user".equals(entry.getKey()) && decodedValue.contains("\\/")) {
+                        decodedValue = decodedValue.replace("\\/", "/");
+                        log.debug("Replaced escaped slashes in user: {} -> {}", entry.getValue(), decodedValue);
+                    }
                     decodedParams.put(entry.getKey(), decodedValue);
                     log.debug("Decoded {}: {} -> {}", entry.getKey(), entry.getValue(), decodedValue);
                 } catch (Exception e) {
@@ -64,7 +68,6 @@ public class TelegramAuthService {
                 }
             }
 
-            // Создаем data check string в том же порядке, что и получили
             String dataCheckString = decodedParams.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .map(entry -> entry.getKey() + "=" + entry.getValue())
@@ -73,7 +76,6 @@ public class TelegramAuthService {
             log.info("Data check string length: {}", dataCheckString.length());
             log.info("Data check string: '{}'", dataCheckString);
 
-            // Выводим каждую строку отдельно для отладки
             String[] lines = dataCheckString.split("\n");
             for (int i = 0; i < lines.length; i++) {
                 log.info("Line {}: '{}'", i, lines[i]);
@@ -87,7 +89,6 @@ public class TelegramAuthService {
             if (!receivedHash.equals(calculatedHash)) {
                 log.warn("Hash mismatch. Calculated: {}, Received: {}", calculatedHash, receivedHash);
 
-                // Дополнительная отладка - попробуем без URL декодирования
                 String rawDataCheckString = dataParams.entrySet().stream()
                         .sorted(Map.Entry.comparingByKey())
                         .map(entry -> entry.getKey() + "=" + entry.getValue())
@@ -145,7 +146,6 @@ public class TelegramAuthService {
     }
 
     public TelegramUserData extractUserData(String initData) {
-        // Реализация извлечения данных пользователя
         return new TelegramUserData();
     }
 }
