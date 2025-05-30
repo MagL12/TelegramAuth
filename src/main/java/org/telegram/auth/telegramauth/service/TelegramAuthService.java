@@ -51,7 +51,7 @@ public class TelegramAuthService {
             // Создаем копию параметров и удаляем hash и signature
             Map<String, String> dataParams = new HashMap<>(params);
             dataParams.remove("hash");
-            dataParams.remove("signature");
+            //  dataParams.remove("signature");
 
             // ВАЖНО: декодируем URL-encoded значения
             Map<String, String> decodedParams = new HashMap<>();
