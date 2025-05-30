@@ -72,6 +72,9 @@ public class TelegramAuthService {
                     .map(entry -> entry.getKey() + "=" + entry.getValue())
                     .collect(Collectors.joining("\n"));
 
+            dataCheckString = dataCheckString.trim();
+            log.info("Trimmed data check string: '{}'", dataCheckString);
+
             log.info("Data check string (byte length): {}", dataCheckString.getBytes(StandardCharsets.UTF_8).length);
             log.info("Data check string (char array): {}", dataCheckString.toCharArray());
             log.info("Data check string: '{}'", dataCheckString);
