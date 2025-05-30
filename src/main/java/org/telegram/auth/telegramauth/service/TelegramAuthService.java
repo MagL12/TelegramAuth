@@ -72,7 +72,6 @@ public class TelegramAuthService {
                     .map(entry -> entry.getKey() + "=" + entry.getValue())
                     .collect(Collectors.joining("\n"));
 
-            // Дополнительная отладка для проверки строки
             log.info("Data check string (byte length): {}", dataCheckString.getBytes(StandardCharsets.UTF_8).length);
             log.info("Data check string (char array): {}", dataCheckString.toCharArray());
             log.info("Data check string: '{}'", dataCheckString);
@@ -132,6 +131,8 @@ public class TelegramAuthService {
         Mac hmacSha256 = Mac.getInstance("HmacSHA256");
         SecretKeySpec keySpec = new SecretKeySpec(secretKey, "HmacSHA256");
         hmacSha256.init(keySpec);
+        // Явная очистка перед вычислением
+        hmacSha256.reset();
         byte[] hash = hmacSha256.doFinal(data.getBytes(StandardCharsets.UTF_8));
         return bytesToHex(hash);
     }
