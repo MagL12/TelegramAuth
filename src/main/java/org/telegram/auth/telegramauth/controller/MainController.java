@@ -2,6 +2,7 @@ package org.telegram.auth.telegramauth.controller;
 
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.http.HttpStatus;
@@ -19,38 +20,36 @@ import org.telegram.auth.telegramauth.service.UserService;
 
 import java.util.Map;
 
+@Slf4j
 @Controller
 public class MainController {
-
     @Autowired
     private TelegramAuthService telegramAuthService;
-
     @Autowired
     private UserService userService;
 
     @GetMapping("/")
     public String index(@RequestHeader(value = "X-Init-Data", required = false) String initData, Model model) {
+        log.info("Received request with initData: {}", initData);
 
-        // Если нет initData, возвращаем ошибку
         if (initData == null || initData.isEmpty()) {
+            log.warn("Missing authentication data");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing authentication data");
         }
 
-        // Валидируем данные Telegram
         if (!telegramAuthService.validateTelegramData(initData)) {
+            log.warn("Invalid authentication data");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid authentication data");
         }
 
-        // Извлекаем данные пользователя
         TelegramUserData telegramUserData = telegramAuthService.extractUserData(initData);
         if (telegramUserData == null) {
+            log.warn("Cannot extract user data");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Cannot extract user data");
         }
 
-        // Сохраняем или обновляем пользователя в базе данных
         TelegramUser user = userService.saveOrUpdateUser(telegramUserData);
-
-        // Добавляем данные в модель для отображения
+        log.info("User saved/updated: {}", user);
         model.addAttribute("user", user);
 
         return "index";

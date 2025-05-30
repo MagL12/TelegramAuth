@@ -67,7 +67,12 @@ public class TelegramAuthService {
             // Вычисляем hash
             String calculatedHash = calculateHash(dataCheckString, secretKey);
 
-            return receivedHash.equals(calculatedHash);
+            if (!receivedHash.equals(calculatedHash)) {
+                log.warn("Hash mismatch - received: {}, calculated: {}", receivedHash, calculatedHash);
+                return false;
+            }
+            log.info("initData validation successful");
+            return true;
 
         } catch (Exception e) {
             return false;
