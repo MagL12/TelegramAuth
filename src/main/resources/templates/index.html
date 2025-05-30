@@ -235,6 +235,7 @@
         tg.ready();
 
         const initData = tg.initData;
+        console.log("Sending initData:", initData); // Для отладки
         if (initData) {
             fetch('/validate', {
                 method: 'POST',
@@ -242,7 +243,7 @@
                 body: JSON.stringify({ initData: initData })
             })
                 .then(response => {
-                    if (!response.ok) throw new Error('Validation failed');
+                    if (!response.ok) throw new Error('Validation failed: ' + response.status);
                     return response.json();
                 })
                 .then(data => {
