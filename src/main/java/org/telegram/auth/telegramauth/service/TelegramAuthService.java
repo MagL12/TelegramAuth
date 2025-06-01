@@ -10,6 +10,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -54,13 +55,10 @@ public class TelegramAuthService {
                 return false;
             }
 
-            // Создаем копию параметров без hash и signature для проверки
             Map<String, String> dataParams = new HashMap<>(params);
             dataParams.remove("hash");
             dataParams.remove("signature");
 
-            // ВАЖНО: НЕ декодируем URL для проверки хеша!
-            // Используем исходные значения как они пришли
             String dataCheckString = dataParams.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .map(entry -> entry.getKey() + "=" + entry.getValue())
@@ -76,35 +74,11 @@ public class TelegramAuthService {
             String calculatedHash = calculateHash(dataCheckString, secretKey);
             log.info("Calculated hash: {}, Received hash: {}", calculatedHash, receivedHash);
 
-            // Попробуем также с разными вариантами кодировки
-            String dataCheckStringDecoded = dataParams.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .map(entry -> {
-                        String value = entry.getValue();
-                        try {
-                            String decoded = URLDecoder.decode(value, StandardCharsets.UTF_8);
-                            if ("user".equals(entry.getKey()) && decoded.contains("\\/")) {
-                                decoded = decoded.replace("\\/", "/");
-                            }
-                            return entry.getKey() + "=" + decoded;
-                        } catch (Exception e) {
-                            return entry.getKey() + "=" + value;
-                        }
-                    })
-                    .collect(Collectors.joining("\n"));
-
-            String calculatedHashDecoded = calculateHash(dataCheckStringDecoded, secretKey);
-            log.info("Alternative hash (with URL decoding): {}", calculatedHashDecoded);
-
             if (receivedHash.equals(calculatedHash)) {
-                log.info("initData validation successful (raw data)");
-                return true;
-            } else if (receivedHash.equals(calculatedHashDecoded)) {
-                log.info("initData validation successful (decoded data)");
+                log.info("initData validation successful");
                 return true;
             } else {
-                log.warn("Hash mismatch. Calculated (raw): {}, Calculated (decoded): {}, Received: {}",
-                        calculatedHash, calculatedHashDecoded, receivedHash);
+                log.warn("Hash mismatch. Calculated: {}, Received: {}", calculatedHash, receivedHash);
                 return false;
             }
         } catch (Exception e) {
@@ -125,10 +99,8 @@ public class TelegramAuthService {
     }
 
     private byte[] createSecretKey(String botToken) throws Exception {
-        Mac hmacSha256 = Mac.getInstance("HmacSHA256");
-        SecretKeySpec botTokenKeySpec = new SecretKeySpec(botToken.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
-        hmacSha256.init(botTokenKeySpec);
-        return hmacSha256.doFinal("WebAppData".getBytes(StandardCharsets.UTF_8));
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        return digest.digest(botToken.getBytes(StandardCharsets.UTF_8));
     }
 
     private String calculateHash(String data, byte[] secretKey) throws Exception {
@@ -151,37 +123,25 @@ public class TelegramAuthService {
         return hexString.toString();
     }
 
-    // Метод для получения декодированных данных пользователя (только после успешной проверки)
     public TelegramUserData extractUserData(String initData) {
         Map<String, String> params = parseInitData(initData);
         String userJson = params.get("user");
 
         if (userJson != null) {
             try {
-                // Декодируем только для извлечения данных
                 String decodedUserJson = URLDecoder.decode(userJson, StandardCharsets.UTF_8);
                 decodedUserJson = decodedUserJson.replace("\\/", "/");
-
-                // Здесь можно парсить JSON и создать TelegramUserData
-                // Например, используя Jackson или Gson
                 log.info("Decoded user data: {}", decodedUserJson);
-
-                // Возвращаем объект с данными пользователя
                 return parseUserData(decodedUserJson);
             } catch (Exception e) {
                 log.error("Failed to extract user data: {}", e.getMessage(), e);
             }
         }
-
         return new TelegramUserData();
     }
 
     private TelegramUserData parseUserData(String userJson) {
         // Здесь должна быть логика парсинга JSON в TelegramUserData
-        // Пример с использованием Jackson:
-        // ObjectMapper mapper = new ObjectMapper();
-        // return mapper.readValue(userJson, TelegramUserData.class);
-
-        return new TelegramUserData(); // Заглушка
+        return new TelegramUserData();
     }
 }
