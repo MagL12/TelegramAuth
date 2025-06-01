@@ -25,7 +25,7 @@ spring:
 
 telegram:
   bot:
-    token: 8120838392:AAHkDJsHU7qDU5vHE55NP1C4cvRQXWEhNv4
+    token: 8120838392:AAGHTbUP60GYNKHyy7wzC8Z0Crff7pKlaj4
 logging:
   level:
     org.telegram.auth.telegramauth: DEBUG
