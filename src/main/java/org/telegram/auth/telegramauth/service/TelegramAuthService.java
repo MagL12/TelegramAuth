@@ -41,9 +41,6 @@ public class TelegramAuthService {
 
             long authTimestamp = Long.parseLong(authDate);
             long currentTimestamp = System.currentTimeMillis() / 1000;
-            log.info("Auth timestamp: {}, Current timestamp: {}, Difference: {} seconds",
-                    authTimestamp, currentTimestamp, currentTimestamp - authTimestamp);
-
             if (currentTimestamp - authTimestamp > 3600) {
                 log.warn("auth_date is too old: {}", authTimestamp);
                 return false;
@@ -65,22 +62,13 @@ public class TelegramAuthService {
                     .collect(Collectors.joining("\n"));
 
             log.info("Data check string: '{}'", dataCheckString);
-            log.info("Data check string bytes: {}", Arrays.toString(dataCheckString.getBytes(StandardCharsets.UTF_8)));
-            log.info("Bot token (first 10 chars): {}", botToken.substring(0, Math.min(10, botToken.length())));
 
-            byte[] secretKey = createSecretKey(botToken);
-            log.info("Secret key (hex): {}", bytesToHex(secretKey));
-
+            byte[] secretKey = createSecretKey(botToken); // <--- исправлено
             String calculatedHash = calculateHash(dataCheckString, secretKey);
+
             log.info("Calculated hash: {}, Received hash: {}", calculatedHash, receivedHash);
 
-            if (receivedHash.equals(calculatedHash)) {
-                log.info("initData validation successful");
-                return true;
-            } else {
-                log.warn("Hash mismatch. Calculated: {}, Received: {}", calculatedHash, receivedHash);
-                return false;
-            }
+            return receivedHash.equals(calculatedHash);
         } catch (Exception e) {
             log.error("Validation failed: {}", e.getMessage(), e);
             return false;
@@ -98,11 +86,11 @@ public class TelegramAuthService {
         return params;
     }
 
+    // ✅ Исправленная версия — по документации Telegram
     private byte[] createSecretKey(String botToken) throws Exception {
-        Mac hmacSha256 = Mac.getInstance("HmacSHA256");
-        SecretKeySpec botTokenKeySpec = new SecretKeySpec(botToken.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
-        hmacSha256.init(botTokenKeySpec);
-        return hmacSha256.doFinal("WebAppData".getBytes(StandardCharsets.UTF_8));
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] tokenHash = digest.digest(botToken.getBytes(StandardCharsets.UTF_8));
+        return tokenHash;
     }
 
     private String calculateHash(String data, byte[] secretKey) throws Exception {
@@ -143,8 +131,7 @@ public class TelegramAuthService {
     }
 
     private TelegramUserData parseUserData(String userJson) {
-        // Здесь должна быть логика парсинга JSON в TelegramUserData
-
+        // TODO: Реализуйте JSON парсинг в TelegramUserData
         return new TelegramUserData();
     }
 }
