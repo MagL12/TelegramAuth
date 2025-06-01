@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import java.util.Arrays;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -38,6 +40,9 @@ public class TelegramAuthService {
 
             long authTimestamp = Long.parseLong(authDate);
             long currentTimestamp = System.currentTimeMillis() / 1000;
+            log.info("Auth timestamp: {}, Current timestamp: {}, Difference: {} seconds",
+                    authTimestamp, currentTimestamp, currentTimestamp - authTimestamp);
+
             if (currentTimestamp - authTimestamp > 3600) {
                 log.warn("auth_date is too old: {}", authTimestamp);
                 return false;
@@ -62,6 +67,8 @@ public class TelegramAuthService {
                     .collect(Collectors.joining("\n"));
 
             log.info("Data check string: '{}'", dataCheckString);
+            log.info("Data check string bytes: {}", Arrays.toString(dataCheckString.getBytes(StandardCharsets.UTF_8)));
+            log.info("Bot token (first 10 chars): {}", botToken.substring(0, Math.min(10, botToken.length())));
 
             byte[] secretKey = createSecretKey(botToken);
             log.info("Secret key (hex): {}", bytesToHex(secretKey));
@@ -69,13 +76,37 @@ public class TelegramAuthService {
             String calculatedHash = calculateHash(dataCheckString, secretKey);
             log.info("Calculated hash: {}, Received hash: {}", calculatedHash, receivedHash);
 
-            if (!receivedHash.equals(calculatedHash)) {
-                log.warn("Hash mismatch. Calculated: {}, Received: {}", calculatedHash, receivedHash);
+            // Попробуем также с разными вариантами кодировки
+            String dataCheckStringDecoded = dataParams.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .map(entry -> {
+                        String value = entry.getValue();
+                        try {
+                            String decoded = URLDecoder.decode(value, StandardCharsets.UTF_8);
+                            if ("user".equals(entry.getKey()) && decoded.contains("\\/")) {
+                                decoded = decoded.replace("\\/", "/");
+                            }
+                            return entry.getKey() + "=" + decoded;
+                        } catch (Exception e) {
+                            return entry.getKey() + "=" + value;
+                        }
+                    })
+                    .collect(Collectors.joining("\n"));
+
+            String calculatedHashDecoded = calculateHash(dataCheckStringDecoded, secretKey);
+            log.info("Alternative hash (with URL decoding): {}", calculatedHashDecoded);
+
+            if (receivedHash.equals(calculatedHash)) {
+                log.info("initData validation successful (raw data)");
+                return true;
+            } else if (receivedHash.equals(calculatedHashDecoded)) {
+                log.info("initData validation successful (decoded data)");
+                return true;
+            } else {
+                log.warn("Hash mismatch. Calculated (raw): {}, Calculated (decoded): {}, Received: {}",
+                        calculatedHash, calculatedHashDecoded, receivedHash);
                 return false;
             }
-
-            log.info("initData validation successful");
-            return true;
         } catch (Exception e) {
             log.error("Validation failed: {}", e.getMessage(), e);
             return false;
