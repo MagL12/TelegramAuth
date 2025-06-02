@@ -132,6 +132,8 @@ public class TelegramAuthService {
 
     private TelegramUserData parseUserData(String userJson) {
         // TODO: Реализуйте JSON парсинг в TelegramUserData
+
+
         return new TelegramUserData();
     }
 }
