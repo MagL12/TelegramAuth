@@ -36,6 +36,7 @@ public class TelegramAuthService {
             String authDate = params.get("auth_date");
             if (authDate == null) {
                 log.warn("auth_date is missing");
+
                 return false;
             }
 
