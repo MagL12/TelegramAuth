@@ -8,6 +8,7 @@ import org.telegram.auth.telegramauth.dto.TelegramUserData;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -28,6 +29,7 @@ public class TelegramAuthService {
     private final Object macLock = new Object();
 
     public boolean validateTelegramData(String initData) {
+        log.info("Using bot token: {}", botToken);
         try {
             log.info("Raw initData: {}", initData);
             Map<String, String> params = parseInitData(initData);
@@ -81,7 +83,7 @@ public class TelegramAuthService {
         for (String pair : initData.split("&")) {
             String[] keyValue = pair.split("=", 2);
             if (keyValue.length == 2) {
-                params.put(keyValue[0], keyValue[1]);
+                params.put(keyValue[0], URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8));
             }
         }
         return params;
