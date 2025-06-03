@@ -101,11 +101,14 @@ public class TelegramAuthService {
 
     private String calculateHash(String data, byte[] secretKey) throws Exception {
         synchronized (macLock) {
+            log.info("Data check string bytes: {}", bytesToHex(data.getBytes(StandardCharsets.UTF_8)));
             Mac hmacSha256 = Mac.getInstance("HmacSHA256");
             SecretKeySpec keySpec = new SecretKeySpec(secretKey, "HmacSHA256");
             hmacSha256.init(keySpec);
             byte[] hash = hmacSha256.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            return bytesToHex(hash);
+            String calculatedHash = bytesToHex(hash);
+            log.info("Raw hash bytes: {}", bytesToHex(hash));
+            return calculatedHash;
         }
     }
 
