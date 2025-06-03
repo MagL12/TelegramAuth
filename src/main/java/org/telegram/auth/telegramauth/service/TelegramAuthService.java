@@ -84,7 +84,7 @@ public class TelegramAuthService {
         for (String pair : initData.split("&")) {
             String[] keyValue = pair.split("=", 2);
             if (keyValue.length == 2) {
-                params.put(keyValue[0], URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8));
+                params.put(keyValue[0], keyValue[1]); // Без декодирования
             }
         }
         return params;
@@ -94,7 +94,9 @@ public class TelegramAuthService {
     private byte[] createSecretKey(String botToken) throws Exception {
         Mac hmacSha256 = Mac.getInstance("HmacSHA256");
         hmacSha256.init(new SecretKeySpec("WebAppData".getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-        return hmacSha256.doFinal(botToken.getBytes(StandardCharsets.UTF_8));
+        byte[] secretKey = hmacSha256.doFinal(botToken.getBytes(StandardCharsets.UTF_8));
+        log.info("Secret key (hex): {}", bytesToHex(secretKey));
+        return secretKey;
     }
 
     private String calculateHash(String data, byte[] secretKey) throws Exception {
