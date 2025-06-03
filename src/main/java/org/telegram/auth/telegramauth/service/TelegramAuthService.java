@@ -89,9 +89,9 @@ public class TelegramAuthService {
 
     // ✅ Исправленная версия — по документации Telegram
     private byte[] createSecretKey(String botToken) throws Exception {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] tokenHash = digest.digest(botToken.getBytes(StandardCharsets.UTF_8));
-        return tokenHash;
+        Mac hmacSha256 = Mac.getInstance("HmacSHA256");
+        hmacSha256.init(new SecretKeySpec("WebAppData".getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+        return hmacSha256.doFinal(botToken.getBytes(StandardCharsets.UTF_8));
     }
 
     private String calculateHash(String data, byte[] secretKey) throws Exception {
