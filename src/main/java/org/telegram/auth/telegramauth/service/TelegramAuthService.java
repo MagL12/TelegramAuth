@@ -30,6 +30,7 @@ public class TelegramAuthService {
 
     public boolean validateTelegramData(String initData) {
         log.info("Using bot token: {}", botToken);
+
         try {
             log.info("Raw initData: {}", initData);
             Map<String, String> params = parseInitData(initData);
